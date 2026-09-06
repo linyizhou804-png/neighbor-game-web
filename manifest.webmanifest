@@ -1,0 +1,12 @@
+{
+  "name": "隔壁的他",
+  "short_name": "隔壁的他",
+  "description": "一款手机横屏可玩的悬疑恋爱互动网页游戏",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#100d0b",
+  "theme_color": "#1b1512"
+}

@@ -22,6 +22,8 @@ html,
 body {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -57,10 +59,25 @@ button:focus-visible {
   height: 100dvh;
   overflow: hidden;
   background: #100d0b;
+  --scene-background: url("./assets/living-room.png");
+  touch-action: manipulation;
+}
+
+.game-shell::before {
+  position: absolute;
+  z-index: 0;
+  inset: -28px;
+  content: "";
+  pointer-events: none;
+  background: var(--scene-background) center / cover no-repeat;
+  filter: blur(22px) brightness(0.42) saturate(0.72);
+  opacity: 0;
+  transform: scale(1.06);
 }
 
 .scene-image {
   position: absolute;
+  z-index: 1;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -714,6 +731,11 @@ button:focus-visible {
   opacity: 0;
 }
 
+.cover-stage {
+  position: absolute;
+  inset: 0;
+}
+
 .safety-screen,
 .story-screen {
   z-index: 34;
@@ -1003,7 +1025,7 @@ button:focus-visible {
   margin-top: 27px;
 }
 
-.cover-screen img {
+.cover-stage img {
   display: block;
   width: 100%;
   height: 100%;
@@ -1530,6 +1552,39 @@ button:focus-visible {
   .cover-enter {
     left: 16.8%;
     width: 17%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .game-shell::before {
+    opacity: 1;
+  }
+
+  .scene-image {
+    object-fit: contain;
+  }
+
+  .cover-screen {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .cover-screen::before {
+    position: absolute;
+    inset: -28px;
+    content: "";
+    background: url("./assets/cover.png") center / cover no-repeat;
+    filter: blur(22px) brightness(0.42) saturate(0.72);
+    transform: scale(1.06);
+  }
+
+  .cover-stage {
+    position: relative;
+    inset: auto;
+    width: min(100vw, 177.307dvh);
+    height: min(100dvh, 56.399vw);
+    box-shadow: 0 0 70px rgba(0, 0, 0, 0.38);
   }
 }
 

@@ -150,7 +150,10 @@ function getRenderedSceneBounds() {
   const shell = els.gameShell.getBoundingClientRect();
   const sourceWidth = els.sceneImage.naturalWidth || 1672;
   const sourceHeight = els.sceneImage.naturalHeight || 943;
-  const scale = Math.max(shell.width / sourceWidth, shell.height / sourceHeight);
+  const imageFit = window.getComputedStyle(els.sceneImage).objectFit;
+  const scale = imageFit === "contain"
+    ? Math.min(shell.width / sourceWidth, shell.height / sourceHeight)
+    : Math.max(shell.width / sourceWidth, shell.height / sourceHeight);
   const width = sourceWidth * scale;
   const height = sourceHeight * scale;
 
@@ -238,6 +241,7 @@ function render() {
   const room = rooms[state.room];
   els.sceneImage.src = room.image;
   els.sceneImage.alt = `邻居家的${room.title}`;
+  els.gameShell.style.setProperty("--scene-background", `url("${room.image}")`);
   els.roomTitle.textContent = room.title;
   renderStatus();
   renderRoomTabs();
@@ -855,7 +859,23 @@ els.closeModal.addEventListener("click", hideInspect);
 els.keepLooking.addEventListener("click", hideInspect);
 els.storyClose.addEventListener("click", hideStory);
 
+async function requestMobileFullscreen() {
+  const mobileLayout = window.matchMedia("(pointer: coarse) and (max-width: 1100px)").matches;
+  if (!mobileLayout || document.fullscreenElement) return;
+
+  const root = document.documentElement;
+  const request = root.requestFullscreen || root.webkitRequestFullscreen;
+  if (!request) return;
+
+  try {
+    await request.call(root, { navigationUI: "hide" });
+  } catch {
+    // Some mobile browsers do not expose page-controlled fullscreen.
+  }
+}
+
 els.startButton.addEventListener("click", () => {
+  void requestMobileFullscreen();
   els.safetyOverlay.classList.add("show");
   els.safetyOverlay.setAttribute("aria-hidden", "false");
 });
