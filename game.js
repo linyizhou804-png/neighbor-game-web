@@ -42,7 +42,6 @@ const els = {
   mapToggle: document.querySelector("#mapToggle"),
   notebookToggle: document.querySelector("#notebookToggle"),
   roomTabs: [...document.querySelectorAll(".room-tab")],
-  roomProgress: document.querySelector("#roomProgress"),
   notebookRoom: document.querySelector("#notebookRoom"),
   clueList: document.querySelector("#clueList"),
   inspectModal: document.querySelector("#inspectModal"),
@@ -70,6 +69,9 @@ const els = {
   theaterText: document.querySelector("#theaterText"),
   theaterNext: document.querySelector("#theaterNext"),
   soundToggle: document.querySelector("#soundToggle"),
+  soundLabel: document.querySelector("#soundLabel"),
+  backgroundMusic: document.querySelector("#backgroundMusic"),
+  forceLandscapeButton: document.querySelector("#forceLandscapeButton"),
   endingOverlay: document.querySelector("#endingOverlay"),
   endingLabel: document.querySelector("#endingLabel"),
   endingTitle: document.querySelector("#endingTitle"),
@@ -147,19 +149,20 @@ function closeDrawers() {
 }
 
 function getRenderedSceneBounds() {
-  const shell = els.gameShell.getBoundingClientRect();
+  const shellWidth = els.gameShell.clientWidth;
+  const shellHeight = els.gameShell.clientHeight;
   const sourceWidth = els.sceneImage.naturalWidth || 1672;
   const sourceHeight = els.sceneImage.naturalHeight || 943;
   const imageFit = window.getComputedStyle(els.sceneImage).objectFit;
   const scale = imageFit === "contain"
-    ? Math.min(shell.width / sourceWidth, shell.height / sourceHeight)
-    : Math.max(shell.width / sourceWidth, shell.height / sourceHeight);
+    ? Math.min(shellWidth / sourceWidth, shellHeight / sourceHeight)
+    : Math.max(shellWidth / sourceWidth, shellHeight / sourceHeight);
   const width = sourceWidth * scale;
   const height = sourceHeight * scale;
 
   return {
-    left: (shell.width - width) / 2,
-    top: (shell.height - height) / 2,
+    left: (shellWidth - width) / 2,
+    top: (shellHeight - height) / 2,
     width,
     height,
   };
@@ -201,7 +204,6 @@ function renderNotebook() {
   const room = rooms[state.room];
   const visited = room.hotspots.filter((item) => state.visited.has(item.id));
 
-  els.roomProgress.textContent = `${visited.length} / ${room.hotspots.length}`;
   els.notebookRoom.textContent = room.title;
   els.clueList.innerHTML = "";
 
@@ -874,6 +876,29 @@ async function requestMobileFullscreen() {
   }
 }
 
+function enableLandscapeFallback() {
+  document.body.classList.add("force-landscape");
+  requestAnimationFrame(renderHotspots);
+}
+
+async function requestMobileLandscape() {
+  await requestMobileFullscreen();
+
+  try {
+    await window.screen.orientation?.lock?.("landscape");
+  } catch {
+    // Several Android browsers do not implement orientation locking.
+  }
+
+  window.setTimeout(() => {
+    if (window.matchMedia("(orientation: portrait)").matches) enableLandscapeFallback();
+  }, 240);
+}
+
+els.forceLandscapeButton.addEventListener("click", () => {
+  void requestMobileLandscape();
+});
+
 els.startButton.addEventListener("click", () => {
   void requestMobileFullscreen();
   els.safetyOverlay.classList.add("show");
@@ -886,9 +911,29 @@ els.bridgeOverlay.addEventListener("keydown", (event) => {
   if (event.key === "Enter" || event.key === " ") finishPrologueBridge();
 });
 
-els.soundToggle.addEventListener("click", () => {
-  const enabled = els.soundToggle.getAttribute("aria-pressed") === "true";
-  els.soundToggle.setAttribute("aria-pressed", String(!enabled));
+function renderSoundState(isPlaying) {
+  const label = isPlaying ? "暂停背景音乐" : "播放背景音乐";
+  els.soundToggle.setAttribute("aria-pressed", String(isPlaying));
+  els.soundToggle.dataset.tooltip = label;
+  els.soundLabel.textContent = label;
+}
+
+els.backgroundMusic.volume = 0.18;
+els.backgroundMusic.addEventListener("play", () => renderSoundState(true));
+els.backgroundMusic.addEventListener("pause", () => renderSoundState(false));
+els.backgroundMusic.addEventListener("error", () => renderSoundState(false));
+
+els.soundToggle.addEventListener("click", async () => {
+  if (!els.backgroundMusic.paused) {
+    els.backgroundMusic.pause();
+    return;
+  }
+
+  try {
+    await els.backgroundMusic.play();
+  } catch {
+    renderSoundState(false);
+  }
 });
 
 els.restartButton.addEventListener("click", () => window.location.reload());
@@ -907,6 +952,11 @@ document.addEventListener("keydown", (event) => {
 });
 
 els.sceneImage.addEventListener("load", renderHotspots);
-window.addEventListener("resize", () => requestAnimationFrame(renderHotspots));
+window.addEventListener("resize", () => {
+  if (window.matchMedia("(orientation: landscape)").matches) {
+    document.body.classList.remove("force-landscape");
+  }
+  requestAnimationFrame(renderHotspots);
+});
 
 render();

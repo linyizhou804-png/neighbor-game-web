@@ -48,9 +48,9 @@
 
       <div class="scene-meta" aria-live="polite">
         <p id="roomTitle">客厅</p>
-        <button class="sound-button" id="soundToggle" type="button" aria-pressed="false" data-tooltip="环境音">
+        <button class="sound-button" id="soundToggle" type="button" aria-pressed="false" data-tooltip="播放背景音乐">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 9v6h4l5 4V5L9 9H5Z" /><path d="M17.5 8.5a5 5 0 0 1 0 7M20 6a8.5 8.5 0 0 1 0 12" /></svg>
-          <span class="sr-only">环境音</span>
+          <span class="sr-only" id="soundLabel">播放背景音乐</span>
         </button>
       </div>
 
@@ -74,7 +74,6 @@
           <button class="drawer-close" type="button" data-close="notebook" aria-label="关闭调查手账">×</button>
         </div>
         <div class="notebook-summary">
-          <span id="roomProgress">0 / 0</span>
           <p id="notebookRoom">客厅</p>
         </div>
         <ol class="clue-list" id="clueList"></ol>
@@ -92,9 +91,10 @@
         <button class="note-confirm" id="keepLooking" type="button">继续调查</button>
       </section>
 
-      <div class="orientation-hint" aria-hidden="true">
+      <div class="orientation-hint">
         <svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="m15 8 3 3-3 3M18 11H9" /></svg>
         <span>请横屏游玩</span>
+        <button class="orientation-fallback" id="forceLandscapeButton" type="button">浏览器无法旋转？使用兼容横屏</button>
       </div>
     </main>
 
@@ -157,6 +157,8 @@
       </div>
     </section>
 
+    <!-- Romantic Piano~Bittersweet Romance by pianocafe_Kumi, Pixabay Content License. -->
+    <audio id="backgroundMusic" src="./assets/bittersweet-romance.mp3" preload="metadata" loop></audio>
     <script src="./story.js"></script>
     <script src="./game.js"></script>
   </body>
