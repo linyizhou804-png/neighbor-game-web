@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1b1512" />
+    <title>隔壁的他</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="game-shell" id="gameShell">
+      <img id="sceneImage" class="scene-image" src="./assets/living-room.png" alt="邻居家的客厅" />
+      <div class="scene-frame" aria-hidden="true"></div>
+      <div id="hotspotLayer" class="hotspot-layer" aria-label="房间内可调查物品"></div>
+
+      <header class="hud" aria-label="调查工具">
+        <div class="status-meters">
+          <div class="status-meter affection-meter" id="affectionMeter" aria-label="心动值">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+            <span>心动值</span>
+            <strong id="affectionValue">10</strong>
+            <i aria-hidden="true"><b id="affectionBar"></b></i>
+          </div>
+          <div class="status-meter suspicion-meter" id="suspicionMeter" aria-label="怀疑度">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5M11 8v3M11 14h.01" /></svg>
+            <span>怀疑度</span>
+            <strong id="suspicionValue">0</strong>
+            <i aria-hidden="true"><b id="suspicionBar"></b></i>
+          </div>
+        </div>
+
+        <div class="utility-controls">
+          <button class="icon-button" id="notebookToggle" type="button" aria-controls="notebookPanel" aria-expanded="false" data-tooltip="调查手账">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" /><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5a2.5 2.5 0 0 1 2.5 2.5v-16Z" /></svg>
+            <span class="sr-only">调查手账</span>
+          </button>
+          <button class="icon-button" id="mapToggle" type="button" aria-controls="roomMap" aria-expanded="false" data-tooltip="房间地图">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" /><path d="M9 3v15M15 6v15" /></svg>
+            <span class="sr-only">房间地图</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="scene-meta" aria-live="polite">
+        <p id="roomTitle">客厅</p>
+        <button class="sound-button" id="soundToggle" type="button" aria-pressed="false" data-tooltip="环境音">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 9v6h4l5 4V5L9 9H5Z" /><path d="M17.5 8.5a5 5 0 0 1 0 7M20 6a8.5 8.5 0 0 1 0 12" /></svg>
+          <span class="sr-only">环境音</span>
+        </button>
+      </div>
+
+      <aside class="drawer room-map" id="roomMap" aria-label="房间地图" aria-hidden="true">
+        <div class="drawer-head">
+          <p>房间地图</p>
+          <button class="drawer-close" type="button" data-close="map" aria-label="关闭房间地图">×</button>
+        </div>
+        <p class="map-caption">这间公寓比你想象中更安静。</p>
+        <nav class="room-list" aria-label="选择房间">
+          <button class="room-tab active" data-room="living"><span>01</span>客厅</button>
+          <button class="room-tab" data-room="kitchen"><span>02</span>厨房</button>
+          <button class="room-tab" data-room="bedroom"><span>03</span>卧室</button>
+          <button class="room-tab" data-room="secret"><span>04</span>密室</button>
+        </nav>
+      </aside>
+
+      <aside class="drawer notebook" id="notebookPanel" aria-label="调查手账" aria-hidden="true">
+        <div class="drawer-head">
+          <p>调查手账</p>
+          <button class="drawer-close" type="button" data-close="notebook" aria-label="关闭调查手账">×</button>
+        </div>
+        <div class="notebook-summary">
+          <span id="roomProgress">0 / 0</span>
+          <p id="notebookRoom">客厅</p>
+        </div>
+        <ol class="clue-list" id="clueList"></ol>
+      </aside>
+
+      <section class="clue-note" id="inspectModal" role="dialog" aria-modal="true" aria-labelledby="inspectTitle" aria-hidden="true">
+        <button class="note-close" id="closeModal" type="button" aria-label="关闭线索">×</button>
+        <span class="note-index" id="inspectType">线索</span>
+        <h2 id="inspectTitle"></h2>
+        <figure class="inspect-media" id="inspectMedia" hidden>
+          <img id="inspectImage" alt="" />
+        </figure>
+        <div id="inspectText" class="inspect-text"></div>
+        <div class="inspect-actions" id="inspectActions"></div>
+        <button class="note-confirm" id="keepLooking" type="button">继续调查</button>
+      </section>
+
+      <div class="orientation-hint" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="m15 8 3 3-3 3M18 11H9" /></svg>
+        <span>请横屏游玩</span>
+      </div>
+    </main>
+
+    <section class="cover-screen" id="introOverlay" role="dialog" aria-modal="true" aria-label="隔壁的他封面">
+      <img src="./assets/cover.png" alt="隔壁的他游戏封面：一位站在阳光客厅里的黑发邻居" />
+      <button class="cover-enter" id="startButton" type="button" aria-label="进入调查"><span class="sr-only">进入调查</span></button>
+    </section>
+
+    <section class="safety-screen" id="safetyOverlay" role="dialog" aria-modal="true" aria-labelledby="safetyTitle" aria-hidden="true">
+      <div class="safety-sheet">
+        <span>在故事开始以前</span>
+        <h2 id="safetyTitle">请先把自己放在故事之前</h2>
+        <p>接下来是一个把危险藏进温柔里的虚构故事。它包含跟踪、偷拍、非法监控、窃取并收藏私人物品等情节。这些行为不是爱，也不应被浪漫化。</p>
+        <p>如果现实中遇到以“喜欢”或“保护”为由尾随、监视、控制或侵犯隐私的人，请不要独自对峙，立刻远离，有多远跑多远。保留聊天记录、照片、录像等证据，及时告知可信赖的人；情况紧急时请立即报警。</p>
+        <strong>现实里，保护自己永远比理解他更重要。</strong>
+        <button class="story-primary" id="safetyContinue" type="button">我记住了，进入故事</button>
+      </div>
+    </section>
+
+    <section class="bridge-screen" id="bridgeOverlay" aria-hidden="true" tabindex="0">
+      <div class="bridge-copy">
+        <span>现在，把危险留在故事里。</span>
+        <p>隔壁的灯，已经亮了一个月。</p>
+      </div>
+    </section>
+
+    <section class="story-screen" id="storyOverlay" role="dialog" aria-modal="true" aria-labelledby="storyTitle" aria-hidden="true">
+      <div class="story-sheet">
+        <button class="note-close story-close" id="storyClose" type="button" aria-label="关闭">×</button>
+        <span id="storyIndex">序章</span>
+        <h2 id="storyTitle"></h2>
+        <div class="story-body" id="storyBody"></div>
+        <div class="story-actions" id="storyActions"></div>
+      </div>
+    </section>
+
+    <section class="theater-screen" id="theaterOverlay" role="dialog" aria-modal="true" aria-labelledby="theaterTitle" aria-hidden="true">
+      <img class="theater-backdrop" src="./assets/living-room.png" alt="邻居家的客厅" />
+      <div class="theater-vignette"></div>
+      <img class="theater-character" src="./assets/neighbor-sprite-v2.png" alt="站在客厅里的邻居" />
+      <div class="theater-heading">
+        <span id="theaterIndex">终幕小剧场</span>
+        <h2 id="theaterTitle">迟来的密码</h2>
+      </div>
+      <div class="theater-dialogue" aria-live="polite">
+        <span class="theater-speaker" id="theaterSpeaker"></span>
+        <div class="theater-copy" id="theaterText"></div>
+        <button class="theater-next" id="theaterNext" type="button">下一句</button>
+      </div>
+    </section>
+
+    <section class="ending-screen" id="endingOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="ending-note">
+        <span id="endingLabel">调查结束</span>
+        <h2 id="endingTitle"></h2>
+        <div class="ending-text" id="endingText"></div>
+        <button class="story-primary" id="restartButton" type="button">回到封面</button>
+      </div>
+    </section>
+
+    <script src="./story.js"></script>
+    <script src="./game.js"></script>
+  </body>
+</html>
