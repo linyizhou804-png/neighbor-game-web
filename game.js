@@ -640,21 +640,70 @@ function hideStory() {
   els.storyOverlay.setAttribute("aria-hidden", "true");
 }
 
-function showIntroStory() {
+const introPages = [
+  {
+    index: "序章 · 一",
+    title: story.intro.title,
+    paragraphs: story.intro.paragraphs.slice(0, 2),
+  },
+  {
+    index: "序章 · 二",
+    title: "恰好",
+    paragraphs: story.intro.paragraphs.slice(2),
+  },
+  {
+    index: "序章 · 三",
+    title: "上午十点十七分",
+    messages: story.intro.messages.slice(0, 3),
+  },
+  {
+    index: "序章 · 四",
+    title: "他的消息",
+    messages: story.intro.messages.slice(3),
+  },
+  {
+    index: "序章 · 五",
+    title: "门锁上的数字",
+    paragraphs: story.intro.closing.slice(0, 2),
+  },
+  {
+    index: "序章 · 六",
+    title: "门已经打开",
+    paragraphs: story.intro.closing.slice(2),
+  },
+];
+
+function showIntroStory(pageIndex = 0) {
+  const page = introPages[pageIndex];
+  const isLastPage = pageIndex === introPages.length - 1;
+  const actions = [];
+
+  if (pageIndex > 0) {
+    actions.push({
+      label: "上一页",
+      onClick: () => showIntroStory(pageIndex - 1),
+    });
+  }
+
+  actions.push({
+    label: isLastPage ? "回复“好”并进入他家" : "继续",
+    primary: true,
+    onClick: () => {
+      if (!isLastPage) {
+        showIntroStory(pageIndex + 1);
+        return;
+      }
+
+      state.flags.introRead = true;
+      hideStory();
+      render();
+    },
+  });
+
   showStory({
-    ...story.intro,
+    ...page,
     dismissible: false,
-    actions: [
-      {
-        label: "回复“好”并进入他家",
-        primary: true,
-        onClick: () => {
-          state.flags.introRead = true;
-          hideStory();
-          render();
-        },
-      },
-    ],
+    actions,
   });
 }
 
@@ -900,12 +949,16 @@ els.forceLandscapeButton.addEventListener("click", () => {
 });
 
 els.startButton.addEventListener("click", () => {
+  void startBackgroundMusic();
   void requestMobileFullscreen();
   els.safetyOverlay.classList.add("show");
   els.safetyOverlay.setAttribute("aria-hidden", "false");
 });
 
-els.safetyContinue.addEventListener("click", beginPrologueBridge);
+els.safetyContinue.addEventListener("click", () => {
+  void startBackgroundMusic();
+  beginPrologueBridge();
+});
 els.bridgeOverlay.addEventListener("click", finishPrologueBridge);
 els.bridgeOverlay.addEventListener("keydown", (event) => {
   if (event.key === "Enter" || event.key === " ") finishPrologueBridge();
@@ -918,6 +971,18 @@ function renderSoundState(isPlaying) {
   els.soundLabel.textContent = label;
 }
 
+let musicTurnedOff = false;
+
+async function startBackgroundMusic() {
+  if (musicTurnedOff || !els.backgroundMusic.paused) return;
+
+  try {
+    await els.backgroundMusic.play();
+  } catch {
+    renderSoundState(false);
+  }
+}
+
 els.backgroundMusic.volume = 0.18;
 els.backgroundMusic.addEventListener("play", () => renderSoundState(true));
 els.backgroundMusic.addEventListener("pause", () => renderSoundState(false));
@@ -925,15 +990,13 @@ els.backgroundMusic.addEventListener("error", () => renderSoundState(false));
 
 els.soundToggle.addEventListener("click", async () => {
   if (!els.backgroundMusic.paused) {
+    musicTurnedOff = true;
     els.backgroundMusic.pause();
     return;
   }
 
-  try {
-    await els.backgroundMusic.play();
-  } catch {
-    renderSoundState(false);
-  }
+  musicTurnedOff = false;
+  await startBackgroundMusic();
 });
 
 els.restartButton.addEventListener("click", () => window.location.reload());

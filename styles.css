@@ -833,7 +833,32 @@ button:focus-visible {
 }
 
 .story-sheet {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   width: min(760px, calc(100vw - 52px));
+  overflow: hidden;
+}
+
+.story-sheet > span {
+  grid-row: 1;
+}
+
+.story-sheet > h2 {
+  grid-row: 2;
+}
+
+.story-body {
+  grid-row: 3;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+
+.story-sheet > .story-actions {
+  grid-row: 4;
 }
 
 .story-screen.letter-mode {
@@ -1650,6 +1675,11 @@ button:focus-visible {
   body.force-landscape .story-sheet {
     width: min(720px, calc(100dvh - 28px));
     max-height: calc(100dvw - 28px);
+  }
+
+  body.force-landscape .story-body {
+    overscroll-behavior: contain;
+    touch-action: pan-x pan-y;
   }
 
   body.force-landscape .letter-mode .story-sheet {
